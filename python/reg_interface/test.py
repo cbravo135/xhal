@@ -46,9 +46,13 @@ ttcGenConf = lib.ttcGenConf
 ttcGenConf.restype = c_uint
 ttcGenConf.argtypes = [c_uint, c_uint]
 
-tscan = lib.thresholdScan
-tscan.restype = c_uint
-tscan.argtypes = [c_uint, c_uint, c_uint, c_uint, c_uint, c_uint, c_uint]
+genScan = lib.genScan
+genScan.restype = c_uint
+genScan.argtypes = [c_uint, c_uint, c_uint, c_uint, c_uint, c_uint, c_uint, c_uint, c_char_p]
+
+confVFAT = lib.configureVFAT3s
+confVFAT.restype = c_uint
+confVFAT.argtypes = [c_uint, c_uint]
 
 DEBUG = True
 
@@ -60,8 +64,8 @@ def main():
   print "Connect time %s" %(elapsed_)
   print "Connection to eagle60 successful"
   print "Configure TTC"
-  L1Ainterval = 0x200
-  pulseDelay = 0
+  L1Ainterval = 400
+  pulseDelay = 50
   res=ttcGenConf(L1Ainterval, pulseDelay)
   if res==0:
     print "TTC configured successfully"
@@ -74,9 +78,12 @@ def main():
   dacMin = 0
   dacMax = 255
   dacStep = 1
-  ch = 128
-  mask = 0xFFFFEF
-  tscan(nevts, ohN, dacMin, dacMax, dacStep, ch, mask)
+  ch = 69
+  enCal = 1
+  mask = 0xF65F7E
+  scanReg = "LATENCY"
+  confVFAT(ohN,mask)
+  genScan(nevts, ohN, dacMin, dacMax, dacStep, ch, enCal, mask, scanReg)
   #getRegInfo("GEM_AMC.GEM_SYSTEM.BOARD_ID")
   #res = (c_uint32 * 5)()
   #res_code = getTTCmain(res)
@@ -123,10 +130,17 @@ def main():
   #else:
   #  print "confVFATs failed"
 
+def confVFATtest(mask, oh):
+    rpc_connect("eagle60")
+    ohN = 0
+    vfatN = 4
+    mask = 0x0
+    confVFAT(ohN,vfatN,mask)
 
 if __name__ == '__main__':
   start_time = timeit.default_timer()
   # code you want to evaluate
   main()
+  #confVFATtest()
   elapsed = timeit.default_timer() - start_time
   print "Total time %s" %(elapsed)
